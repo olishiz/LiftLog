@@ -1,0 +1,39 @@
+name: iOS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Pick an iPhone simulator
+        id: sim
+        run: |
+          udid=$(xcrun simctl list devices available -j \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(x["udid"] for r,v in d.items() if "iOS" in r for x in v if x["name"].startswith("iPhone")))')
+          echo "udid=$udid" >> "$GITHUB_OUTPUT"
+          xcrun simctl list devices available | grep "$udid"
+
+      - name: Build and test
+        run: |
+          xcodebuild -project LiftLog.xcodeproj -scheme LiftLog \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -derivedDataPath build \
+            build test
+
+      - name: Package simulator app
+        run: tar -czf LiftLog.app.tar.gz -C build/Build/Products/Debug-iphonesimulator LiftLog.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LiftLog-simulator-app
+          path: LiftLog.app.tar.gz
