@@ -30,8 +30,13 @@ jobs:
             -derivedDataPath build \
             build test
 
-      - name: Package simulator app
-        run: tar -czf LiftLog.app.tar.gz -C build/Build/Products/Debug-iphonesimulator LiftLog.app
+      - name: Build and package simulator app
+        run: |
+          xcodebuild -project LiftLog.xcodeproj -scheme LiftLog -configuration Debug \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath build-app \
+            build
+          tar -czf LiftLog.app.tar.gz -C build-app/Build/Products/Debug-iphonesimulator LiftLog.app
 
       - uses: actions/upload-artifact@v4
         with:
