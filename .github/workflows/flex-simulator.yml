@@ -25,9 +25,13 @@ jobs:
         working-directory: flex
         run: |
           git submodule update --init --recursive flutter
+          # A shallow checkout has no release tags, so Flutter would report
+          # version 0.0.0 and fail the SDK constraint. This commit is the
+          # 3.47 candidate Flex pins.
+          git -C flutter tag -f 3.47.0
+          ./flutter/bin/flutter config --no-analytics
+          ./flutter/bin/flutter --version
           echo "$PWD/flutter/bin" >> "$GITHUB_PATH"
-          flutter config --no-analytics
-          flutter --version
 
       - name: Switch the theme to black and white
         run: python3 scripts/monochrome_flex.py flex
