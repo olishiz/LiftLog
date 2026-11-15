@@ -1,7 +1,9 @@
 name: Flex monochrome simulator
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - cursor/flex-monochrome-preview-130b
 
 jobs:
   ios-simulator:
