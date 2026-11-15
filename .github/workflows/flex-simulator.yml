@@ -1,0 +1,49 @@
+name: Flex monochrome simulator
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ios-simulator:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: brandonp2412/Flex
+          ref: main
+          path: flex
+          fetch-depth: 1
+          submodules: false
+          persist-credentials: false
+
+      - name: Install the Flutter SDK Flex pins
+        working-directory: flex
+        run: |
+          git submodule update --init --recursive flutter
+          echo "$PWD/flutter/bin" >> "$GITHUB_PATH"
+          flutter config --no-analytics
+          flutter --version
+
+      - name: Switch the theme to black and white
+        run: python3 scripts/monochrome_flex.py flex
+
+      - name: Get dependencies
+        working-directory: flex
+        run: flutter pub get --enforce-lockfile
+
+      - name: Build the iOS simulator app
+        working-directory: flex
+        run: flutter build ios --simulator
+
+      - name: Package Runner.app
+        working-directory: flex
+        run: tar -czf "$GITHUB_WORKSPACE/Runner.app.tar.gz" -C build/ios/iphonesimulator Runner.app
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flex-simulator-app
+          path: Runner.app.tar.gz
+          retention-days: 1
